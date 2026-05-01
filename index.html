@@ -28,13 +28,9 @@ main{
   padding:18px;
 }
 #left{flex:0 0 420px;display:flex;flex-direction:column;gap:12px}
-.card{
-  flex:1;
-  background:var(--card);
-  border-radius:10px;
-  padding:14px;
-  cursor:pointer;
-  box-shadow:0 6px 20px rgba(0,0,0,0.06);
+.card {
+  max-height: 180px;
+  overflow-y: auto;
 }
 .card:hover{transform:translateY(-3px)}
 button{
@@ -112,41 +108,66 @@ let imageExt = 'jpg';
 ========================= */
 
 const nodes = {
-  start:{
-    id:"start",
-    a:{text:"Eje único desde la base",goto:"2"},
-    b:{text:"—",goto:"2"}
-  },
-  "2":{
-    id:"2",
-    a:{text:"Sin ramificaciones laterales",goto:"3"},
-    b:{text:"—",goto:"3"}
-  },
-  "3":{
-    id:"3",
-    a:{text:"Hojas pinnadas",goto:"4"},
-    b:{text:"Hojas palmadas",goto:"4p"}
-  },
-  "4":{
-    id:"4",
-    a:{text:"Syagrus romanzoffiana",goto:"leaf:Syagrus"},
-    b:{text:"Con espinas",goto:"5"}
-  },
-  "4p":{
-    id:"4p",
-    a:{text:"Con espinas",goto:"5"},
-    b:{text:"—",goto:null}
-  },
-  "5":{
-    id:"5",
-    a:{text:"Butia yatay",goto:"leaf:Butia"},
-    b:{text:"Phoenix",goto:"6"}
-  },
-  "6":{
-    id:"6",
-    a:{text:"Phoenix canariensis",goto:"leaf:Phoenix"},
-    b:{text:"Phoenix roebelenii",goto:"leaf:Phoenix2"}
-  }
+
+"1":{
+  id:"1",
+  a:{text:"Plantas con eje único desde la base (árboles)", goto:"2"},
+  b:{text:"", goto:"2"}
+},
+
+"2":{
+  id:"2",
+  a:{text:"Eje sin ramificaciones laterales. Hojas agrupadas en el extremo superior", goto:"3"},
+  b:{text:"", goto:"3"}
+},
+
+"3":{
+  id:"3",
+  a:{text:"Hojas pinnadas", goto:"4"},
+  b:{text:"Hojas palmadas", goto:"4p"}
+},
+
+// ---------------- PINNADAS ----------------
+
+"4":{
+  id:"4",
+  a:{text:"Syagrus romanzoffiana (Pindó)", goto:"leaf:Syagrus romanzoffiana"},
+  b:{text:"Hojas con pecíolo espinoso", goto:"5"}
+},
+
+"5":{
+  id:"5",
+  a:{text:"Butia yatay (Yatay)", goto:"leaf:Butia yatay"},
+  b:{text:"Espinas no ganchosas", goto:"6"}
+},
+
+"6":{
+  id:"6",
+  a:{text:"Phoenix canariensis (Palmera Fénix)", goto:"leaf:Phoenix canariensis"},
+  b:{text:"Phoenix roebelenii (Fénix robelini)", goto:"leaf:Phoenix roebelenii"}
+},
+
+// ---------------- PALMADAS ----------------
+// 4' del documento → aquí lo llamamos 4p SOLO por compatibilidad técnica
+
+"4p":{
+  id:"4p",
+  a:{text:"Plantas con un solo estípite", goto:"5p"},
+  b:{text:"Plantas con varios estípites desde la base (Chamaerops humilis)", goto:"leaf:Chamaerops humilis"}
+},
+
+"5p":{
+  id:"5p",
+  a:{text:"Estípite con restos foliares", goto:"6p"},
+  b:{text:"Livistona chinensis", goto:"leaf:Livistona chinensis"}
+},
+
+"6p":{
+  id:"6p",
+  a:{text:"Washingtonia robusta", goto:"leaf:Washingtonia robusta"},
+  b:{text:"Washingtonia filifera", goto:"leaf:Washingtonia filifera"}
+}
+
 };
 
 /* =========================
