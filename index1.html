@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clave árbol urbano - Dilemas</title>
+
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--accent:#2b7cff;--muted:#6b7280}
+body{
+  margin:0;
+  font-family:system-ui,Segoe UI,Arial;
+  background:var(--bg);
+  color:#111;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+}
+header{
+  padding:12px 18px;
+  background:linear-gradient(90deg,#fff 0,#f0f6ff 100%);
+  box-shadow:0 1px 0 rgba(0,0,0,0.05);
+}
+main{
+  display:flex;
+  flex:1;
+  gap:18px;
+  padding:18px;
+}
+#left{flex:0 0 420px;display:flex;flex-direction:column;gap:12px}
+.card{
+  flex:1;
+  background:var(--card);
+  border-radius:10px;
+  padding:14px;
+  cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,0.06);
+}
+.card:hover{transform:translateY(-3px)}
+button{
+  background:var(--accent);
+  color:#fff;
+  border:0;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+}
+button.secondary{
+  background:#e6eefc;
+  color:var(--accent);
+}
+#canvas-container{
+  flex:1;
+  background:#dfeeff;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.meta{
+  font-size:13px;
+  color:var(--muted);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Clave por caracteres vegetativos</h1>
+</header>
+
+<main>
+
+<div id="left">
+
+  <div class="meta">Dilema: <strong id="dilemaId"></strong></div>
+
+  <div class="card" id="optA">
+    <h3 id="optA_title"></h3>
+    <p id="optA_text"></p>
+  </div>
+
+  <div class="card" id="optB">
+    <h3 id="optB_title"></h3>
+    <p id="optB_text"></p>
+  </div>
+
+  <button id="restart">Reiniciar</button>
+
+  <div class="meta">Recurso: <span id="recursoLabel"></span></div>
+
+</div>
+
+<div id="canvas-container"></div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.156.0/build/three.min.js"></script>
+
+<script>
+/* =========================
+   CONFIGURACIÓN IMPORTANTE
+========================= */
+
+let imageFolderPath = './dilemasjpg/'; // carpeta EXACTA en GitHub
+let imageExt = 'jpg';
+
+/* =========================
+   DATOS
+========================= */
+
+const nodes = {
+  start:{
+    id:"start",
+    a:{text:"Eje único desde la base",goto:"2"},
+    b:{text:"—",goto:"2"}
+  },
+  "2":{
+    id:"2",
+    a:{text:"Sin ramificaciones laterales",goto:"3"},
+    b:{text:"—",goto:"3"}
+  },
+  "3":{
+    id:"3",
+    a:{text:"Hojas pinnadas",goto:"4"},
+    b:{text:"Hojas palmadas",goto:"4p"}
+  },
+  "4":{
+    id:"4",
+    a:{text:"Syagrus romanzoffiana",goto:"leaf:Syagrus"},
+    b:{text:"Con espinas",goto:"5"}
+  },
+  "4p":{
+    id:"4p",
+    a:{text:"Con espinas",goto:"5"},
+    b:{text:"—",goto:null}
+  },
+  "5":{
+    id:"5",
+    a:{text:"Butia yatay",goto:"leaf:Butia"},
+    b:{text:"Phoenix",goto:"6"}
+  },
+  "6":{
+    id:"6",
+    a:{text:"Phoenix canariensis",goto:"leaf:Phoenix"},
+    b:{text:"Phoenix roebelenii",goto:"leaf:Phoenix2"}
+  }
+};
+
+/* =========================
+   VARIABLES
+========================= */
+
+let current = "start";
+let resourceMap = {};
+let nextResource = 1;
+
+/* =========================
+   THREE JS
+========================= */
+
+let scene, camera, renderer, mesh;
+
+function init3D(){
+  const container = document.getElementById("canvas-container");
+
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(45,1,0.1,1000);
+  camera.position.z = 3;
+
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  container.appendChild(renderer.domElement);
+
+  const geo = new THREE.PlaneGeometry(2,2);
+  const mat = new THREE.MeshBasicMaterial({color:0xffffff});
+  mesh = new THREE.Mesh(geo,mat);
+  scene.add(mesh);
+
+  animate();
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene,camera);
+}
+
+/* =========================
+   IMÁGENES (CORREGIDO)
+========================= */
+
+function loadImage(n){
+  const url = imageFolderPath + 'Recurso ' + n + '.' + imageExt;
+
+  console.log("Cargando:", url);
+
+  const loader = new THREE.TextureLoader();
+
+  loader.load(url,
+    (tex)=>{
+      mesh.material.map = tex;
+      mesh.material.needsUpdate = true;
+    },
+    undefined,
+    ()=>{
+      console.warn("No se pudo cargar:", url);
+    }
+  );
+}
+
+/* =========================
+   UI
+========================= */
+
+function assignResource(id){
+  if(resourceMap[id]) return resourceMap[id];
+  resourceMap[id] = nextResource++;
+  return resourceMap[id];
+}
+
+function render(id){
+  current = id;
+  const node = nodes[id];
+
+  document.getElementById("dilemaId").textContent = id;
+
+  const res = assignResource(id);
+  document.getElementById("recursoLabel").textContent = res;
+
+  loadImage(res);
+
+  document.getElementById("optA_title").textContent = "Opción A";
+  document.getElementById("optB_title").textContent = "Opción B";
+
+  document.getElementById("optA_text").textContent = node.a.text;
+  document.getElementById("optB_text").textContent = node.b.text;
+
+  document.getElementById("optA").onclick = ()=>go(node.a);
+  document.getElementById("optB").onclick = ()=>go(node.b);
+}
+
+function go(opt){
+  if(!opt || !opt.goto) return;
+
+  if(opt.goto.startsWith("leaf:")){
+    document.getElementById("optA_text").textContent = opt.goto.replace("leaf:","");
+    document.getElementById("optB_text").textContent = "Reiniciar";
+    document.getElementById("optB").onclick = ()=>location.reload();
+    return;
+  }
+
+  render(opt.goto);
+}
+
+/* =========================
+   INICIO
+========================= */
+
+document.getElementById("restart").onclick = ()=>{
+  location.reload();
+};
+
+init3D();
+render("start");
+
+</script>
+
+</body>
+</html>
