@@ -1,10 +1,10 @@
 clave-arbolado/
 │
-├── index.html   ← tu archivo (renombralo así)
-└── dilemasjpg/
-    ├── Recurso1.jpg
-    ├── Recurso2.jpg
-    ├── Recurso3.jpg
+├── index.html  
+    └── dilemasjpg/
+    ├── Recurso 1.jpg
+    ├── Recurso 2.jpg
+    ├── Recurso 3.jpg
     └── …
 <!doctype html>
 <html lang="es">
@@ -79,7 +79,7 @@ clave-arbolado/
     Ejemplos:
       imageFolderPath = './dilemasjpg/';  // si pones el .html en la misma carpeta padre
       imageFolderPath = 'file:///C:/Users/valec/Documents/Proyecto arboleda urbana/dilemasjpg/'; // ruta absoluta (puede requerir permisos)
-  - Las imágenes deben llamarse exactamente: Recurso1.jpg, Recurso2.jpg, ...
+  - Las imágenes deben llamarse exactamente: Recurso 1.jpg, Recurso 2.jpg, ...
   - Soporta tags explícitos en opciones: por ejemplo "Texto de opción [Recurso: 18]" → asignará recurso 18.
 */
 
@@ -317,7 +317,7 @@ function animate(){ requestAnimationFrame(animate); planeMesh.rotation.y += 0.00
 
 // load texture by resource number
 function loadResourceImage(resNum){
-  const url = imageFolderPath + 'Recurso' + resNum + '.' + imageExt;
+  const url = imageFolderPath + 'Recurso ' + resNum + '.' + imageExt;
   recursoLabel.textContent = 'Recurso ' + resNum;
   // try load texture
   const loader = new THREE.TextureLoader();
