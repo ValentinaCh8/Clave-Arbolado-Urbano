@@ -1,0 +1,344 @@
+clave-arbolado/
+│
+├── index.html   ← tu archivo (renombralo así)
+└── dilemasjpg/
+    ├── Recurso1.jpg
+    ├── Recurso2.jpg
+    ├── Recurso3.jpg
+    └── …
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clave árbol urbano - Dilemas</title>
+<style>
+  :root{--bg:#f5f7fb;--card:#fff;--accent:#2b7cff;--muted:#6b7280}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Arial;background:var(--bg);color:#111;display:flex;flex-direction:column;height:100vh}
+  header{padding:12px 18px;background:linear-gradient(90deg,#fff 0,#f0f6ff 100%);box-shadow:0 1px 0 rgba(0,0,0,0.05);display:flex;align-items:center;gap:12px}
+  header h1{font-size:16px;margin:0}
+  main{display:flex;flex:1;gap:18px;padding:18px;box-sizing:border-box}
+  #left{flex:0 0 420px;display:flex;flex-direction:column;gap:12px}
+  .cards{display:flex;gap:12px}
+  .card{flex:1;background:var(--card);border-radius:10px;padding:14px;box-shadow:0 6px 20px rgba(19,27,38,0.06);cursor:pointer;transition:transform .12s ease,box-shadow .12s;user-select:none}
+  .card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(19,27,38,0.08)}
+  .card h3{margin:0 0 8px 0;font-size:14px}
+  .card p{margin:0;color:var(--muted);font-size:13px}
+  .info{font-size:13px;color:var(--muted)}
+  #controls{display:flex;gap:8px;align-items:center;margin-top:auto}
+  button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#e6eefc;color:var(--accent);border:1px solid rgba(43,124,255,0.12)}
+  #threewrap{flex:1;background:linear-gradient(180deg,#e9f0ff 0,#ffffff 100%);border-radius:12px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+  #canvas-container{width:100%;height:100%;min-height:320px;border-radius:8px;overflow:hidden;background:#dfeeff;display:flex;align-items:center;justify-content:center}
+  .meta{position:absolute;left:16px;top:16px;background:rgba(255,255,255,0.85);padding:8px 10px;border-radius:8px;box-shadow:0 6px 18px rgba(16,24,40,0.06)}
+  footer{font-size:12px;color:var(--muted);padding:8px 18px;background:transparent;text-align:right}
+  @media(max-width:880px){main{flex-direction:column}#left{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Clave por caracteres vegetativos — Dilemas (hasta 9)</h1>
+</header>
+
+<main>
+  <div id="left">
+    <div class="meta">Dilema actual: <strong id="dilemaId">—</strong></div>
+
+    <div class="cards">
+      <div class="card" id="optA" role="button" tabindex="0">
+        <h3 id="optA_title">Opción A</h3>
+        <p id="optA_text">-</p>
+      </div>
+      <div class="card" id="optB" role="button" tabindex="0">
+        <h3 id="optB_title">Opción B</h3>
+        <p id="optB_text">-</p>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button id="restart">Reiniciar</button>
+      <button class="secondary" id="show-map">Ver mapa recursos</button>
+      <div style="flex:1"></div>
+      <div class="info">Carpeta imágenes: <span id="imgPath"></span></div>
+    </div>
+  </div>
+
+  <div id="threewrap">
+    <div class="meta">Recurso actual: <strong id="recursoLabel">—</strong></div>
+    <div id="canvas-container"></div>
+  </div>
+</main>
+
+<footer>Archivo único HTML — guarda en tu carpeta y ajusta imageFolderPath si necesitas cambiar la ruta</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.156.0/build/three.min.js"></script>
+<script>
+/*
+  INSTRUCCIONES RÁPIDAS:
+  - Cambia imageFolderPath si quieres la ruta local o relativa a la carpeta de imágenes.
+    Ejemplos:
+      imageFolderPath = './dilemasjpg/';  // si pones el .html en la misma carpeta padre
+      imageFolderPath = 'file:///C:/Users/valec/Documents/Proyecto arboleda urbana/dilemasjpg/'; // ruta absoluta (puede requerir permisos)
+  - Las imágenes deben llamarse exactamente: Recurso1.jpg, Recurso2.jpg, ...
+  - Soporta tags explícitos en opciones: por ejemplo "Texto de opción [Recurso: 18]" → asignará recurso 18.
+*/
+
+let imageFolderPath = './dilemasjpg/'; // <- AJUSTA ESTA RUTA según donde coloques el HTML
+let imageExt = 'jpg'; // formato de las imágenes
+document.getElementById('imgPath').textContent = imageFolderPath;
+
+// --- Datos de la clave (hasta 9. Chamaerops humilis L.) ---
+// Node structure:
+// id: string id for the dilemma (preserves primes like "4'" -> "4p", "4´" kept as "4'")
+//
+// Each option has: text (display), goto (either next dilemma id or species leaf string)
+const nodes = {
+  "start": { id:"start", a:{text:"Plantas con un eje único desde la base. Cuando está dividido siempre a más de 0,5m. Árboles.", goto:"2"}, b:{text:"(no hay alternativa '1\\'')", goto:"2"} },
+  "2": { id:"2", a:{text:"Plantas con un eje sin ramificaciones laterales. Las hojas están agrupadas en el extremo superior.", goto:"3"}, b:{text:"(sin alternativa)", goto:"3"} },
+  "3": { id:"3", a:{text:"Hojas pinnadas.", goto:"4"}, b:{text:"Hojas palmadas.", goto:"4p"} },
+  "4": { id:"4", a:{text:"Hojas con pecíolo no espinoso.", goto:"4a"}, b:{text:"Hojas con peciolo espinoso.", goto:"5"} },
+  // branch for 4 -> 4a leads to species Syagrus
+  "4a": { id:"4a", a:{text:"Syagrus romanzoffiana (Pindó)", goto:"leaf:Syagrus romanzoffiana"}, b:{text:"", goto:null} },
+  // 4' branch (we represent 4' as "4p")
+  "4p": { id:"4p", a:{text:"(4´) Hojas con peciolo espinoso.", goto:"5"}, b:{text:"", goto:null} },
+  "5": { id:"5", a:{text:"Espinas ganchosas.", goto:"5a"}, b:{text:"Espinas no ganchosas.", goto:"5p"} },
+  "5a": { id:"5a", a:{text:"Butia yatay (Yatay)", goto:"leaf:Butia yatay"}, b:{text:"", goto:null} },
+  "5p": { id:"5p", a:{text:"Estípite robusto. Hojas de 5 a 7m de largo.", goto:"6"}, b:{text:"Estípite fino. Hojas de 1,5m de largo.", goto:"6p"} },
+  "6": { id:"6", a:{text:"Phoenix canariensis (Palmera Fénix)", goto:"leaf:Phoenix canariensis"}, b:{text:"", goto:null} },
+  "6p": { id:"6p", a:{text:"Phoenix roebelenii (Palmera Fénix robelini)", goto:"leaf:Phoenix roebelenii"}, b:{text:"", goto:null} },
+
+  // back to 3' branch:
+  "4b": { id:"4b", a:{text:"Plantas con un solo estípite.", goto:"5b"}, b:{text:"Plantas con varios estípites desde la base.", goto:"9"} },
+
+  "5b": { id:"5b", a:{text:"Estípite con restos foliares.", goto:"6b"}, b:{text:"Estípite sin restos foliares.", goto:"8"} },
+
+  "6b": { id:"6b", a:{text:"Estípite con restos foliares de aspecto no peludo.", goto:"7"}, b:{text:"Estípite con fibras oscuras y restos foliares de aspecto peludo.", goto:"7p"} },
+
+  "7": { id:"7", a:{text:"Estípite fino y hojas sin filamentos.", goto:"leaf:Washingtonia robusta"}, b:{text:"Estípite robusto y hojas con filamentos (hilachosas).", goto:"leaf:Washingtonia filifera"} },
+
+  "7p": { id:"7p", a:{text:"Trachycarpus fortunei (Palmera china de abanico)", goto:"leaf:Trachycarpus fortunei"}, b:{text:"", goto:null} },
+
+  "8": { id:"8", a:{text:"Livistona chinensis (Palmera de abanico china)", goto:"leaf:Livistona chinensis"}, b:{text:"", goto:null} },
+
+  "9": { id:"9", a:{text:"Chamaerops humilis L. (Palmito)", goto:"leaf:Chamaerops humilis"}, b:{text:"", goto:null} }
+};
+
+// To connect logical flow from earlier nodes that branch into the palm vs fan branches,
+// we make simplified transitions:
+// After node 3 (Hojas pinnadas -> 4 ; Hojas palmadas -> 4b)
+nodes["3"].b.goto = "4b";
+// From node 4: a->4a (done above), b->5 (we already set 4p ->5) but to keep consistent map:
+nodes["4"].b.goto = "5"; // when choose peciolo espinoso go to 5
+
+// From 4b we already point to 5b and 9 accordingly
+
+// --- Resource assignment algorithm ---
+// We will treat "dilema numbers" as numeric part of node id when applicable.
+// Extract numeric part: e.g., "4", "4p" -> 4. For nodes like "start" or "4a" use defined behavior:
+// - If id starts with number -> numeric = parsed number
+// - Else numeric = next available sequence when encountering a node (so they still get resources in order)
+let resourceMap = {}; // nodeId -> resourceNumber
+const usedResources = new Set();
+let nextFreeResource = 1;
+
+function parseExplicitResourceTag(text){
+  // detect [Recurso: X] or [Img: X]
+  const m = text && text.match(/\[ *(Recurso|Img) *: *(\d+) *\]/i);
+  return m ? parseInt(m[2],10) : null;
+}
+function numericPartOfId(id){
+  const m = id.match(/^(\d+)/);
+  return m ? parseInt(m[1],10) : null;
+}
+function assignResourceForNode(nodeId){
+  if(resourceMap[nodeId]) return resourceMap[nodeId];
+  // try numeric part
+  const num = numericPartOfId(nodeId);
+  if(num && !usedResources.has(num)){
+    resourceMap[nodeId] = num;
+    usedResources.add(num);
+    if(num >= nextFreeResource) nextFreeResource = num+1;
+    return num;
+  }
+  // else assign next free resource number
+  while(usedResources.has(nextFreeResource)) nextFreeResource++;
+  resourceMap[nodeId] = nextFreeResource;
+  usedResources.add(nextFreeResource);
+  nextFreeResource++;
+  return resourceMap[nodeId];
+}
+
+// If user uses explicit tag in an option, we'll honor it when that option is rendered.
+// To allow deterministic behavior, we will compute assignment lazily when a node is visited.
+
+// --- UI & navigation ---
+let currentNodeId = "start";
+const optAElem = document.getElementById('optA');
+const optBElem = document.getElementById('optB');
+const optATitle = document.getElementById('optA_title');
+const optBTitle = document.getElementById('optB_title');
+const optAText = document.getElementById('optA_text');
+const optBText = document.getElementById('optB_text');
+const dilemaLabel = document.getElementById('dilemaId');
+const recursoLabel = document.getElementById('recursoLabel');
+const restartBtn = document.getElementById('restart');
+const showMapBtn = document.getElementById('show-map');
+
+function renderNode(nodeId){
+  currentNodeId = nodeId;
+  const node = nodes[nodeId];
+  dilemaLabel.textContent = nodeId;
+  if(!node) return;
+  // populate options (some nodes have only a)
+  const a = node.a || {text:'', goto:null};
+  const b = node.b || {text:'', goto:null};
+
+  // Check explicit resource tags in option text
+  const aExplicit = parseExplicitResourceTag(a.text);
+  const bExplicit = parseExplicitResourceTag(b.text);
+
+  // Determine resource number for this dilemma node: prefer explicit on chosen option when chosen,
+  // but for display we show resource for the node (assigned by node id).
+  const assigned = assignResourceForNode(nodeId);
+  recursoLabel.textContent = 'Recurso ' + assigned;
+
+  optATitle.textContent = a.goto && a.goto.startsWith('leaf:') ? 'Hoja/Especie' : 'Opción A';
+  optBTitle.textContent = b.goto && b.goto.startsWith('leaf:') ? 'Hoja/Especie' : 'Opción B';
+  optAText.textContent = a.text || '-';
+  optBText.textContent = b.text || '-';
+
+  // load resource image for the node (or if explicit tags preferred, that happens on click)
+  loadResourceImage(assigned);
+
+  // attach click handlers
+  optAElem.onclick = () => chooseOption('a', a, aExplicit);
+  optBElem.onclick = () => chooseOption('b', b, bExplicit);
+  // keyboard accessibility
+  optAElem.onkeypress = (e)=>{ if(e.key==='Enter') chooseOption('a', a, aExplicit); };
+  optBElem.onkeypress = (e)=>{ if(e.key==='Enter') chooseOption('b', b, bExplicit); };
+}
+
+function chooseOption(which, option, explicitResource){
+  if(!option) return;
+  // If option contains explicit resource tag, use it; else use assigned resource for current node
+  let resNum;
+  if(explicitResource) {
+    resNum = explicitResource;
+    usedResources.add(resNum);
+    resourceMap[currentNodeId] = resNum;
+  } else {
+    resNum = resourceMap[currentNodeId] || assignResourceForNode(currentNodeId);
+  }
+  recursoLabel.textContent = 'Recurso ' + resNum;
+  loadResourceImage(resNum);
+
+  // proceed to next node or leaf
+  if(!option.goto) return;
+  if(option.goto.startsWith('leaf:')){
+    // show species leaf; we still render a simple "terminal" state
+    const species = option.goto.slice(5);
+    // present single option to restart or go back (for simplicity, make left card show species and right card restart)
+    optATitle.textContent = 'Especie encontrada';
+    optAText.textContent = species;
+    optAElem.onclick = ()=>{}; optAElem.onkeypress=null;
+    optBTitle.textContent = 'Reiniciar';
+    optBText.textContent = 'Volver al inicio';
+    optBElem.onclick = ()=>{ reset(); };
+    optBElem.onkeypress = (e)=>{ if(e.key==='Enter') reset(); };
+    dilemaLabel.textContent = 'FIN';
+    return;
+  } else {
+    renderNode(option.goto);
+  }
+}
+
+function reset(){
+  resourceMap = {};
+  usedResources.clear();
+  nextFreeResource = 1;
+  renderNode('start');
+}
+
+// But resourceMap was const — redefine reset properly:
+function hardReset(){
+  for(const k in resourceMap){ /* keep existing keys maybe */ }
+  usedResources.clear();
+  nextFreeResource = 1;
+  // clear existing resourceMap entries
+  for (const k in resourceMap) { delete resourceMap[k]; }
+  renderNode('start');
+}
+
+restartBtn.onclick = ()=> hardReset();
+showMapBtn.onclick = ()=> {
+  // simple alert of current resource map (concise)
+  let lines = [];
+  for(const k in resourceMap) lines.push(k + ' → Recurso ' + resourceMap[k]);
+  if(lines.length===0) lines.push('(ninguno asignado todavía)');
+  alert('Mapa de recursos (node → recurso):\n' + lines.join('\\n'));
+};
+
+// --- Three.js simple viewer for rectangular image plane ---
+let scene, camera, renderer, planeMesh;
+const container = document.getElementById('canvas-container');
+function initThree(){
+  scene = new THREE.Scene();
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000);
+  camera.position.set(0,0,3);
+  renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(w,h);
+  container.innerHTML = '';
+  container.appendChild(renderer.domElement);
+
+  const light = new THREE.DirectionalLight(0xffffff,1);
+  light.position.set(2,2,5);
+  scene.add(light);
+  const ambient = new THREE.AmbientLight(0xffffff,0.6);
+  scene.add(ambient);
+
+  const geometry = new THREE.PlaneGeometry(1.7,1);
+  const mat = new THREE.MeshBasicMaterial({color:0xe0e8ff});
+  planeMesh = new THREE.Mesh(geometry, mat);
+  scene.add(planeMesh);
+
+  window.addEventListener('resize', onWindowResize);
+  animate();
+}
+function onWindowResize(){
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+}
+function animate(){ requestAnimationFrame(animate); planeMesh.rotation.y += 0.005; renderer.render(scene,camera); }
+
+// load texture by resource number
+function loadResourceImage(resNum){
+  const url = imageFolderPath + 'Recurso' + resNum + '.' + imageExt;
+  recursoLabel.textContent = 'Recurso ' + resNum;
+  // try load texture
+  const loader = new THREE.TextureLoader();
+  loader.setCrossOrigin('');
+  loader.load(
+    url,
+    function(tex){
+      // adjust plane aspect to image
+      const iw = tex.image.width;
+      const ih = tex.image.height;
+      const aspect = iw/ih;
+      planeMesh.geometry.dispose();
+      planeMesh.geometry = new THREE.PlaneGeometry(1.6*aspect,1.6);
+      planeMesh.material.map = tex;
+planeMesh.material.needsUpdate = true;
+},
+undefined,
+function(err){
+  console.error('Error cargando imagen:', url);
+}
+);
+}
+initThree();
+renderNode('start');
