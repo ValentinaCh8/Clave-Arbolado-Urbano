@@ -165,11 +165,8 @@ const nodes = {
 "6p":{
   id:"6p",
   a:{text:"Washingtonia robusta"},
-  b:{text:"Washingtonia filifera"
-}
-
-};
-
+  b:{text:"Washingtonia filifera"}
+},
 /* =========================
    VARIABLES
 ========================= */
@@ -264,15 +261,27 @@ function render(id){
 }
 
 function go(opt){
-  if(!opt || !opt.goto) return;
+  if(!opt) return;
 
-  if(opt.goto.startsWith("leaf:")){
-    document.getElementById("optA_text").textContent = opt.goto.replace("leaf:","");
-    document.getElementById("optB_text").textContent = "Reiniciar";
-    document.getElementById("optB").onclick = ()=>location.reload();
+  // 👉 CASO FINAL (especie)
+  if(!opt.goto){
+
+    document.getElementById("dilemaId").textContent = "Resultado";
+
+    document.getElementById("optA_title").textContent = "Especie";
+    document.getElementById("optA_text").textContent = opt.text;
+
+    // ocultar opción B
+    document.getElementById("optB").style.display = "none";
+
+    // desactivar clicks
+    document.getElementById("optA").onclick = null;
+
     return;
   }
 
+  // 👉 CASO NORMAL
+  document.getElementById("optB").style.display = "block"; // por si venimos de un resultado
   render(opt.goto);
 }
 
@@ -285,7 +294,7 @@ document.getElementById("restart").onclick = ()=>{
 };
 
 init3D();
-render("start");
+render("1");
 
 </script>
 
