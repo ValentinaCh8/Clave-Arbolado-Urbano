@@ -68,16 +68,16 @@ body{
 ========================= */
 
 const imageMap = {
-  "1": 1,
-  "2a": 2,
-  "3a": 3,
-  "4a": 4,
-  "5a": 6,
-  "6a": 8,
-  "4b": 7
-  "5a": 9,
-  "6a": 10,
-  "7a": 11,
+  "1":"Recurso 1.jpg",
+  "2a":"Recurso 2.jpg",
+  "3a":"Recurso 3.jpg",
+  "4a":"Recurso 4.jpg",
+  "5a_pinnadas":"Recurso 6.jpg",
+  "6a_pinnadas":"Recurso 8.jpg",
+  "4b": "Recurso 7.jpg"
+  "5a_palmadas": "Recurso 9.jpg",
+  "6a_palmadas": "Recurso 10.jpg",
+  "7a": "Recurso 11.jpg",
 };
 
 /* =========================
@@ -85,54 +85,60 @@ const imageMap = {
 ========================= */
 
 const nodes = {
+  "1": {
+    a: { text: "Plantas con un eje único desde la base. Árboles", goto: "2a" },
+    b: { text: "Arbustos", result: "Arbustos" }
+  },
 
-"1":{
-  a:{text:"Plantas con un eje único desde la base. Cuando está dividido, siempre es a más de 0,5 metros de altura del suelo. Árboles", goto:"2a"},
-  b:{text:"Arbustos"}
-},
+  "2a": {
+    a: { text: "Plantas con un eje sin ramificaciones laterales. Hojas agrupadas en el extremo superior", goto: "3a" },
+    b: { text: "Plantas con ramas a lo largo. Hojas distribuidas en ramas laterales y terminales", goto: "3b" }
+  },
 
-"2a":{
-  a:{text:"Plantas con un eje sin ramificaciones laterales. Las hojas están agrupadas en el extremo superior", goto:"3a"},
-  b:{text:"Plantas generalmente con un eje, con ramas a lo largo. Las hojas se distribuyen a lo largo de los ejes de ramas laterales y terminales", goto:"3b"}
-},
+  "3a": {
+    a: { text: "Hojas pinnadas", goto: "4a" },
+    b: { text: "Hojas palmadas", goto: "4b" }
+  },
 
-"3a":{
-  a:{text:"Hojas pinnadas", goto:"4a"},
-  b:{text:"Hojas palmadas", goto:"4b"}
-},
-"4a":{
-  a:{text:"Hojas con pecíolo no espinoso", result:"Syagrus_romanzoffiana (CHAM.) GLASS, o palmera Pindó"},
-  b:{text:"Hojas con pecíolo espinoso", goto:"5a"}
-},
-"5a":{
-  a:{text:"Espinas ganchosas", result:"Butia_yatay (MART.) BECC., o palmera Yatay"},
-  b:{text:"Espinas no ganchosas", goto:"6a"}
-},
-"6a":{
-  a:{text:"Estípite robusto. Hojas de 5 a 7m de largo", result:"Phoenix_canariensis H. WILD, o palmera Fénix)"},
-  b:{text:"Estípite fino. Hojas de 1,5m de largo", result:"Phoenix_roebelenii O´BRIEN, o palmera Fénix robelini"}
-},
-"4b":{
-  a:{text:"Plantas con un solo estípite", goto:"5a"},
-  b:{text:"Plantas con varios estípites desde la base", result:"Chamaerops_humilis L., o Palmito"}
-},
-"5a":{
-  a:{text:"Estípite con restos foliares", goto:"6a"},
-  b:{text:"Estípite sin restos foliares", result:"Livistona_chinensis (JAQC.) R.B. ex MART., o Palmera de abanico china"}
-},
-"6a":{
-  a:{text:"Estípite con restos foliares de aspecto no peludo", goto:"7a"},
-  b:{text:"Estípite con fibras oscuras y restos foliares de aspecto peludo", result:"Trachycarpus_fortunei (HOOK.) H.WENDL., o Palmera china de abanico"}
-},
-"7a":{
-  a:{text:"Estípite fino y hojas sin filamentos", result:"Washingtonia_robusta H.WENDL., o Palmera de abanico"},
-  b:{text:"Estípite robusto y hojas con filamentos (hilachosas)", result:"Washingtonia_filifera (LAND.) H.WENDL., o Washingtonia de California"}
-},
-"3b":{
-  a:{text:"Árboles sin hojas verdaderas con escamas triangulares o acículas fotosintetizantes", result:"Washingtonia_robusta"},
-  b:{text:"Escamas dispuestas en verticilos (niveles) sobre ramitas de color verde que se cortan fácilmente en secciones", result:"Washingtonia_filifera"}
-}
+  "4a": {
+    a: { text: "Hojas con pecíolo no espinoso", result: "Syagrus romanzoffiana (Palmera Pindó)" },
+    b: { text: "Hojas con pecíolo espinoso", goto: "5a_pinnadas" }
+  },
 
+  "5a_pinnadas": {
+    a: { text: "Espinas ganchosas", result: "Butia yatay (Palmera Yatay)" },
+    b: { text: "Espinas no ganchosas", goto: "6a_pinnadas" }
+  },
+
+  "6a_pinnadas": {
+    a: { text: "Estípite robusto. Hojas de 5 a 7m", result: "Phoenix canariensis (Palmera Fénix)" },
+    b: { text: "Estípite fino. Hojas de 1,5m", result: "Phoenix roebelenii (Palmera Fénix robelini)" }
+  },
+
+  "4b": {
+    a: { text: "Plantas con un solo estípite", goto: "5a_palmadas" },
+    b: { text: "Plantas con varios estípites desde la base", result: "Chamaerops humilis (Palmito)" }
+  },
+
+  "5a_palmadas": {
+    a: { text: "Estípite con restos foliares", goto: "6a_palmadas" },
+    b: { text: "Estípite sin restos foliares", result: "Livistona chinensis (Palmera de abanico china)" }
+  },
+
+  "6a_palmadas": {
+    a: { text: "Estípite con restos foliares no peludos", goto: "7a" },
+    b: { text: "Estípite con fibras oscuras y aspecto peludo", result: "Trachycarpus fortunei (Palmera china de abanico)" }
+  },
+
+  "7a": {
+    a: { text: "Estípite fino y hojas sin filamentos", result: "Washingtonia robusta (Palmera de abanico)" },
+    b: { text: "Estípite robusto y hojas hilachosas", result: "Washingtonia filifera (Washingtonia de California)" }
+  },
+
+  "3b": {
+    a: { text: "Árboles sin hojas verdaderas, con acículas fotosintetizantes", result: "Washingtonia robusta" },
+    b: { text: "Escamas en verticilos sobre ramitas verdes", result: "Washingtonia filifera" }
+  }
 };
 
 /* =========================
@@ -211,16 +217,10 @@ function render(id){
 }
 
 function go(opt){
-
   if(opt.result){
-
     document.getElementById("dilemaId").textContent = "Resultado";
-
-    document.getElementById("optA_text").textContent = opt.text;
+    document.getElementById("optA_text").textContent = opt.text + " → " + opt.result;
     document.getElementById("optB").style.display = "none";
-
-    loadImage(opt.result);
-
     return;
   }
 
