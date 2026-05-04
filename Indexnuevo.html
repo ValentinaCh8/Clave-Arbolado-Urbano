@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clave dicotómica</title>
+
+<style>
+body{
+  margin:0;
+  font-family:system-ui,Segoe UI,Arial;
+  display:flex;
+  height:100vh;
+  background:#f5f7fb;
+}
+
+#left{
+  width:420px;
+  padding:16px;
+}
+
+.card{
+  background:#fff;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+#canvas{
+  flex:1;
+  background:#dfeeff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+</style>
+</head>
+
+<body>
+
+<div id="left">
+
+  <div>Dilema: <strong id="dilemaId"></strong></div>
+
+  <div class="card" id="optA">
+    <h3>A</h3>
+    <p id="optA_text"></p>
+  </div>
+
+  <div class="card" id="optB">
+    <h3>B</h3>
+    <p id="optB_text"></p>
+  </div>
+
+  <button onclick="location.reload()">Reiniciar</button>
+
+</div>
+
+<div id="canvas"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.156.0/build/three.min.js"></script>
+
+<script>
+
+/* =========================
+   IMÁGENES (MAPA MANUAL)
+========================= */
+
+const imageMap = {
+  "1": 1,
+  "2a": 2,
+  "3a": 3,
+  "4a": 4,
+  "5a": 6,
+  "6a": 8,
+  "4b": 7
+  "5a": 9,
+  "6a": 10,
+  "7a": 11,
+};
+
+/* =========================
+   NODOS (EJEMPLO BASE)
+========================= */
+
+const nodes = {
+
+"1":{
+  a:{text:"Plantas con un eje único desde la base. Cuando está dividido, siempre es a más de 0,5 metros de altura del suelo. Árboles", goto:"2a"},
+  b:{text:"Arbustos"}
+},
+
+"2a":{
+  a:{text:"Plantas con un eje sin ramificaciones laterales. Las hojas están agrupadas en el extremo superior", goto:"3a"},
+  b:{text:"Plantas generalmente con un eje, con ramas a lo largo. Las hojas se distribuyen a lo largo de los ejes de ramas laterales y terminales", goto:"3b"}
+},
+
+"3a":{
+  a:{text:"Hojas pinnadas", goto:"4a"},
+  b:{text:"Hojas palmadas", goto:"4b"}
+},
+"4a":{
+  a:{text:"Hojas con pecíolo no espinoso", result:"Syagrus_romanzoffiana (CHAM.) GLASS, o palmera Pindó"},
+  b:{text:"Hojas con pecíolo espinoso", goto:"5a"}
+},
+"5a":{
+  a:{text:"Espinas ganchosas", result:"Butia_yatay (MART.) BECC., o palmera Yatay"},
+  b:{text:"Espinas no ganchosas", goto:"6a"}
+},
+"6a":{
+  a:{text:"Estípite robusto. Hojas de 5 a 7m de largo", result:"Phoenix_canariensis H. WILD, o palmera Fénix)"},
+  b:{text:"Estípite fino. Hojas de 1,5m de largo", result:"Phoenix_roebelenii O´BRIEN, o palmera Fénix robelini"}
+},
+"4b":{
+  a:{text:"Plantas con un solo estípite", goto:"5a"},
+  b:{text:"Plantas con varios estípites desde la base", result:"Chamaerops_humilis L., o Palmito"}
+},
+"5a":{
+  a:{text:"Estípite con restos foliares", goto:"6a"},
+  b:{text:"Estípite sin restos foliares", result:"Livistona_chinensis (JAQC.) R.B. ex MART., o Palmera de abanico china"}
+},
+"6a":{
+  a:{text:"Estípite con restos foliares de aspecto no peludo", goto:"7a"},
+  b:{text:"Estípite con fibras oscuras y restos foliares de aspecto peludo", result:"Trachycarpus_fortunei (HOOK.) H.WENDL., o Palmera china de abanico"}
+},
+"7a":{
+  a:{text:"Estípite fino y hojas sin filamentos", result:"Washingtonia_robusta H.WENDL., o Palmera de abanico"},
+  b:{text:"Estípite robusto y hojas con filamentos (hilachosas)", result:"Washingtonia_filifera (LAND.) H.WENDL., o Washingtonia de California"}
+},
+"3b":{
+  a:{text:"Árboles sin hojas verdaderas con escamas triangulares o acículas fotosintetizantes", result:"Washingtonia_robusta"},
+  b:{text:"Escamas dispuestas en verticilos (niveles) sobre ramitas de color verde que se cortan fácilmente en secciones", result:"Washingtonia_filifera"}
+}
+
+};
+
+/* =========================
+   THREE JS
+========================= */
+
+let scene, camera, renderer, mesh;
+
+function init3D(){
+  const c = document.getElementById("canvas");
+
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(45,1,0.1,1000);
+  camera.position.z = 3;
+
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(400,400);
+  c.appendChild(renderer.domElement);
+
+  const geo = new THREE.PlaneGeometry(2,2);
+  const mat = new THREE.MeshBasicMaterial({color:0xffffff});
+  mesh = new THREE.Mesh(geo,mat);
+
+  scene.add(mesh);
+
+  animate();
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene,camera);
+}
+
+/* =========================
+   IMAGEN
+========================= */
+
+function loadImage(key){
+
+  const img = imageMap[key];
+
+  if(!img){
+    console.warn("Sin imagen:", key);
+    return;
+  }
+
+  const url = "./dilemasjpg/Recurso " + img + ".jpg";
+
+  const loader = new THREE.TextureLoader();
+
+  loader.load(url, tex=>{
+    mesh.material.map = tex;
+    mesh.material.needsUpdate = true;
+  });
+}
+
+/* =========================
+   UI
+========================= */
+
+function render(id){
+
+  const node = nodes[id];
+  if(!node) return;
+
+  document.getElementById("dilemaId").textContent = id;
+
+  document.getElementById("optA_text").textContent = node.a.text;
+  document.getElementById("optB_text").textContent = node.b.text;
+
+  document.getElementById("optA").onclick = ()=>go(node.a);
+  document.getElementById("optB").onclick = ()=>go(node.b);
+
+  loadImage(id);
+}
+
+function go(opt){
+
+  if(opt.result){
+
+    document.getElementById("dilemaId").textContent = "Resultado";
+
+    document.getElementById("optA_text").textContent = opt.text;
+    document.getElementById("optB").style.display = "none";
+
+    loadImage(opt.result);
+
+    return;
+  }
+
+  document.getElementById("optB").style.display = "block";
+  render(opt.goto);
+}
+
+/* =========================
+   INICIO
+========================= */
+
+init3D();
+render("1");
+
+</script>
+
+</body>
+</html>
