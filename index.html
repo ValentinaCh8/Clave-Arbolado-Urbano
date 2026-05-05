@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clave dicotómica</title>
+
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Segoe UI, Arial;
+  display: flex;
+  height: 100vh;
+  background: #f5f7fb;
+  overflow: hidden;
+}
+
+#left {
+  width: 420px;
+  padding: 16px;
+  background: #f5f7fb;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.card {
+  background: #fff;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 2px solid #e0e0e0;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+  background: #f0f8ff;
+  border-color: #0066cc;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+.card h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #0066cc;
+}
+
+.card p {
+  margin: 0;
+  color: #333;
+  font-size: 14px;
+}
+
+#dilemaId {
+  color: #0066cc;
+  font-weight: bold;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #0052a3;
+}
+
+#canvasContainer {
+  flex: 1;
+  background: #dfeeff;
+  position: relative;
+  overflow: hidden;
+}
+
+#canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>
+</head>
+
+<body>
+
+<div id="left">
+
+  <div style="margin-bottom: 16px;">
+    <strong>Dilema:</strong> <span id="dilemaId">1</span>
+  </div>
+
+  <div class="card" id="optA" style="cursor: pointer;">
+    <h3>A</h3>
+    <p id="optA_text"></p>
+  </div>
+
+  <div class="card" id="optB" style="cursor: pointer;">
+    <h3>B</h3>
+    <p id="optB_text"></p>
+  </div>
+
+  <button onclick="location.reload()">Reiniciar</button>
+
+</div>
+
+<div id="canvasContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.156.0/build/three.min.js"></script>
+
+<script>
+
+/* =========================
+   IMÁGENES (MAPA MANUAL)
+========================= */
+
+const imageMap = {
+  "1":"1.jpg",
+  "2a":"2.jpg",
+  "3a":"3.jpg",
+  "4a":"4.jpg",
+  "5a_pinnadas":"6.jpg",
+  "6a_pinnadas":"8.jpg",
+  "4b": "7.jpg",
+  "5a_palmadas": "9.jpg",
+  "6a_palmadas": "10.jpg",
+  "7a": "11.jpg",
+};
+
+/* =========================
+   NODOS (EJEMPLO BASE)
+========================= */
+
+const nodes = {
+  "1": {
+    a: { text: "Plantas con un eje único desde la base. Árboles", goto: "2a" },
+    b: { text: "Arbustos", result: "Arbustos" }
+  },
+
+  "2a": {
+    a: { text: "Plantas con un eje sin ramificaciones laterales. Hojas agrupadas en el extremo superior", goto: "3a" },
+    b: { text: "Plantas con ramas a lo largo. Hojas distribuidas en ramas laterales y terminales", goto: "3b" }
+  },
+
+  "3a": {
+    a: { text: "Hojas pinnadas", goto: "4a" },
+    b: { text: "Hojas palmadas", goto: "4b" }
+  },
+
+  "4a": {
+    a: { text: "Hojas con pecíolo no espinoso", result: "Syagrus romanzoffiana (Palmera Pindó)" },
+    b: { text: "Hojas con pecíolo espinoso", goto: "5a_pinnadas" }
+  },
+
+  "5a_pinnadas": {
+    a: { text: "Espinas ganchosas", result: "Butia yatay (Palmera Yatay)" },
+    b: { text: "Espinas no ganchosas", goto: "6a_pinnadas" }
+  },
+
+  "6a_pinnadas": {
+    a: { text: "Estípite robusto. Hojas de 5 a 7m", result: "Phoenix canariensis (Palmera Fénix)" },
+    b: { text: "Estípite fino. Hojas de 1,5m", result: "Phoenix roebelenii (Palmera Fénix robelini)" }
+  },
+
+  "4b": {
+    a: { text: "Plantas con un solo estípite", goto: "5a_palmadas" },
+    b: { text: "Plantas con varios estípites desde la base", result: "Chamaerops humilis (Palmito)" }
+  },
+
+  "5a_palmadas": {
+    a: { text: "Estípite con restos foliares", goto: "6a_palmadas" },
+    b: { text: "Estípite sin restos foliares", result: "Livistona chinensis (Palmera de abanico china)" }
+  },
+
+  "6a_palmadas": {
+    a: { text: "Estípite con restos foliares no peludos", goto: "7a" },
+    b: { text: "Estípite con fibras oscuras y aspecto peludo", result: "Trachycarpus fortunei (Palmera china de abanico)" }
+  },
+
+  "7a": {
+    a: { text: "Estípite fino y hojas sin filamentos", result: "Washingtonia robusta (Palmera de abanico)" },
+    b: { text: "Estípite robusto y hojas hilachosas", result: "Washingtonia filifera (Washingtonia de California)" }
+  },
+
+  "3b": {
+    a: { text: "Árboles sin hojas verdaderas, con acículas fotosintetizantes", result: "Washingtonia robusta" },
+    b: { text: "Escamas en verticilos sobre ramitas verdes", result: "Washingtonia filifera" }
+  }
+};
+
+/* =========================
+   THREE JS
+========================= */
+
+let scene, camera, renderer, mesh;
+
+function init3D(){
+  const container = document.getElementById("canvasContainer");
+
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+  camera.position.z = 3;
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+
+  const geo = new THREE.PlaneGeometry(2, 2);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  mesh = new THREE.Mesh(geo, mat);
+
+  scene.add(mesh);
+
+  window.addEventListener('resize', onWindowResize);
+  animate();
+}
+
+function onWindowResize() {
+  const container = document.getElementById("canvasContainer");
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+/* =========================
+   IMAGEN
+========================= */
+
+function loadImage(key){
+  const img = imageMap[key];
+  if(!img){
+    console.warn("Sin imagen:", key);
+    return;
+  }
+  const url = img;
+  const loader = new THREE.TextureLoader();
+  loader.load(url, tex => {
+    mesh.material.map = tex;
+    mesh.material.needsUpdate = true;
+  }, undefined, err => {
+    console.error("Error cargando imagen:", err);
+  });
+}
+
+/* =========================
+   UI
+========================= */
+
+function render(id){
+
+  const node = nodes[id];
+  if(!node) return;
+
+  document.getElementById("dilemaId").textContent = id;
+
+  document.getElementById("optA_text").textContent = node.a.text;
+  document.getElementById("optB_text").textContent = node.b.text;
+
+  document.getElementById("optA").onclick = ()=>go(node.a);
+  document.getElementById("optB").onclick = ()=>go(node.b);
+
+  loadImage(id);
+}
+
+function go(opt){
+  if(opt.result){
+    document.getElementById("dilemaId").textContent = "Resultado";
+    document.getElementById("optA_text").textContent = opt.text + " → " + opt.result;
+    document.getElementById("optB").style.display = "none";
+    return;
+  }
+
+  document.getElementById("optB").style.display = "block";
+  render(opt.goto);
+}
+
+/* =========================
+   INICIO
+========================= */
+
+init3D();
+render("1");
+
+</script>
+
+</body>
+</html>
