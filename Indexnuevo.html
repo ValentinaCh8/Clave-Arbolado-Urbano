@@ -68,16 +68,16 @@ body{
 ========================= */
 
 const imageMap = {
-  "1":"dilemasjpg/Recurso 1.jpg",
-  "2a":"Recurso 2.jpg",
-  "3a":"Recurso 3.jpg",
-  "4a":"Recurso 4.jpg",
-  "5a_pinnadas":"Recurso 6.jpg",
-  "6a_pinnadas":"Recurso 8.jpg",
-  "4b": "Recurso 7.jpg",
-  "5a_palmadas": "Recurso 9.jpg",
-  "6a_palmadas": "Recurso 10.jpg",
-  "7a": "Recurso 11.jpg",
+  "1":"1.jpg",
+  "2a":"2.jpg",
+  "3a":"3.jpg",
+  "4a":"4.jpg",
+  "5a_pinnadas":"6.jpg",
+  "6a_pinnadas":"8.jpg",
+  "4b": "7.jpg",
+  "5a_palmadas": "9.jpg",
+  "6a_palmadas": "10.jpg",
+  "7a": "11.jpg",
 };
 
 /* =========================
@@ -178,18 +178,13 @@ function animate(){
 ========================= */
 
 function loadImage(key){
-
   const img = imageMap[key];
-
   if(!img){
     console.warn("Sin imagen:", key);
     return;
   }
-
-  const url = "dilemasjpg/" + img;
-
+  const url = img;  // ✅ busca directamente en la raíz del repo
   const loader = new THREE.TextureLoader();
-
   loader.load(url, tex=>{
     mesh.material.map = tex;
     mesh.material.needsUpdate = true;
