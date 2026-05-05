@@ -6,10 +6,15 @@
 <title>Clave dicotómica</title>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 body {
@@ -18,7 +23,6 @@ body {
   display: flex;
   height: 100vh;
   background: #f5f7fb;
-  overflow: hidden;
 }
 
 #left {
@@ -26,8 +30,9 @@ body {
   padding: 16px;
   background: #f5f7fb;
   overflow-y: auto;
-  z-index: 10;
+  z-index: 100;
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  flex-shrink: 0;
 }
 
 .card {
@@ -87,12 +92,13 @@ button:hover {
   background: #dfeeff;
   position: relative;
   overflow: hidden;
+  min-width: 0;
 }
 
-#canvas {
-  width: 100%;
-  height: 100%;
+canvas {
   display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 </style>
 </head>
@@ -217,7 +223,7 @@ function init3D(){
   camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
   camera.position.z = 3;
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   container.appendChild(renderer.domElement);
@@ -234,6 +240,8 @@ function init3D(){
 
 function onWindowResize() {
   const container = document.getElementById("canvasContainer");
+  if(!container.clientWidth) return;
+  
   const width = container.clientWidth;
   const height = container.clientHeight;
   
