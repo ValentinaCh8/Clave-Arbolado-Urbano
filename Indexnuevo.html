@@ -94,6 +94,67 @@ button:hover {
   height: 100%;
   display: block;
 }
+
+/* Intro overlay styles */
+#introOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(7,54,66,0.95), rgba(1,102,153,0.95));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+#introSlides {
+  width: 100%;
+  max-width: 900px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+.slide {
+  display: none;
+}
+
+.slide.active {
+  display: block;
+}
+
+.slide h1 {
+  margin: 0 0 12px 0;
+  font-size: 28px;
+  color: #fff;
+}
+
+.slide p {
+  font-size: 18px;
+  color: #eef7ff;
+  line-height: 1.5;
+}
+
+.navArrow {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.arrowBtn {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  border: none;
+  padding: 14px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.arrowBtn:hover { background: rgba(255,255,255,0.22); }
+
 </style>
 </head>
 
@@ -120,6 +181,27 @@ button:hover {
 </div>
 
 <div id="canvasContainer"></div>
+
+<!-- Intro overlay with two slides -->
+<div id="introOverlay" aria-hidden="false" role="dialog">
+  <div id="introSlides">
+    <div class="slide active" data-index="0">
+      <h1>Árboles Urbanos de Córdoba: Clave dicotómica para identificar especies vegetales de la ciudad</h1>
+      <p style="margin-top:10px;">Pulsa la flecha para continuar</p>
+      <div class="navArrow">
+        <button class="arrowBtn" id="nextToExplain" aria-label="Siguiente">&rarr;</button>
+      </div>
+    </div>
+
+    <div class="slide" data-index="1">
+      <h1>¿Qué es una clave dicotómica?</h1>
+      <p>Es una herramienta de identificación, similar a una guía. A través de una serie de preguntas de decisión, que presentan dos opciones, podemos llegar a identificar y reconocer una especie.</p>
+      <div class="navArrow">
+        <button class="arrowBtn" id="startApp" aria-label="Comenzar">&rarr;</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.156.0/build/three.min.js"></script>
 
@@ -298,6 +380,36 @@ function go(opt){
   document.getElementById("optB").style.display = "block";
   render(opt.goto);
 }
+
+/* =========================
+   INTRO SLIDES
+========================= */
+
+(function setupIntro(){
+  const overlay = document.getElementById('introOverlay');
+  const slides = Array.from(document.querySelectorAll('#introSlides .slide'));
+  let idx = 0;
+
+  function show(i){
+    slides.forEach(s => s.classList.remove('active'));
+    const slide = slides[i];
+    if(slide) slide.classList.add('active');
+    // Update aria-hidden
+    overlay.setAttribute('aria-hidden', i >= slides.length);
+  }
+
+  document.getElementById('nextToExplain').addEventListener('click', ()=>{
+    idx = Math.min(idx + 1, slides.length - 1);
+    show(idx);
+  });
+
+  document.getElementById('startApp').addEventListener('click', ()=>{
+    // hide overlay and start app
+    overlay.style.display = 'none';
+  });
+
+  show(0);
+})();
 
 /* =========================
    INICIO
