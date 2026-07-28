@@ -158,6 +158,12 @@ button:hover {
 
 .arrowBtn:hover { background: #c4b07a; }
 
+.infoNote {
+  margin-top: 12px;
+  color: #222;
+  font-size: 14px;
+}
+
 </style>
 </head>
 
@@ -290,8 +296,9 @@ const nodes = {
 
 /* =========================
    PDF LINKS (archivos por especie)
-   Se asume que los PDFs se subirán a la carpeta 'fichas/' con nombres tipo
+   Se asume que los PDFs se subirán con nombres tipo
    Syagrus_romanzoffiana.pdf, Butia_yatay.pdf, etc.
+   El código ahora verifica dos ubicaciones: carpeta 'fichas/' y la raíz del repo.
 ========================= */
 const pdfFolder = 'fichas/';
 function slugify(text){
@@ -399,7 +406,9 @@ function go(opt){
     container.innerHTML = '';
 
     // determinar ruta del PDF (se asume nombres tipo Slug en la carpeta pdfFolder)
-    const slug = slugify(opt.result);
+    // quitar aclaraciones entre paréntesis para que Syagrus_romanzoffiana.pdf funcione
+    const baseName = opt.result.replace(/\s*\(.*?\)\s*/,'').trim();
+    const slug = slugify(baseName);
     const pdfPath = pdfFolder + slug + '.pdf';
 
     // crear zona de acciones
@@ -459,100 +468,6 @@ function go(opt){
   document.getElementById("optB").style.display = "block";
   render(opt.goto);
 }
-
-function showPdfPreview(url){
-  const container = document.getElementById('canvasContainer');
-  container.innerHTML = ''; // borrar contenido previo
-
-  const wrap = document.createElement('div');
-  wrap.style.height = '100%';
-  wrap.style.display = 'flex';
-  wrap.style.flexDirection = 'column';
-
-  const ctrl = document.createElement('div');
-  ctrl.style.padding = '8px';
-  ctrl.style.background = 'rgba(255,255,255,0.03)';
-  ctrl.style.display = 'flex';
-  ctrl.style.justifyContent = 'space-between';
-  ctrl.style.alignItems = 'center';
-
-  const title = document.createElement('div');
-  title.textContent = 'Previsualización';
-  ctrl.appendChild(title);
-
-  const close = document.createElement('button');
-  close.textContent = 'Cerrar preview';
-  close.onclick = ()=> { container.innerHTML = ''; };
-  ctrl.appendChild(close);
-
-  wrap.appendChild(ctrl);
-
-  const iframe = document.createElement('iframe');
-  iframe.src = url;
-  iframe.style.flex = '1';
-  iframe.style.border = 'none';
-  iframe.style.width = '100%';
-  wrap.appendChild(iframe);
-
-  container.appendChild(wrap);
-}
-
-/* =========================
-   INTRO SLIDES
-========================= */
-
-(function setupIntro(){
-  const overlay = document.getElementById('introOverlay');
-  if(!overlay) return;
-  const slides = Array.from(document.querySelectorAll('#introSlides .slide'));
-  if(!slides.length) return;
-  let idx = 0;
-
-  function show(i){
-    slides.forEach(s => s.classList.remove('active'));
-    const slide = slides[i];
-    if(slide) slide.classList.add('active');
-    overlay.setAttribute('aria-hidden', i >= slides.length);
-  }
-
-  const nextBtn = document.getElementById('nextToExplain');
-  const startBtn = document.getElementById('startApp');
-
-  if(nextBtn) nextBtn.addEventListener('click', ()=>{
-    idx = Math.min(idx + 1, slides.length - 1);
-    show(idx);
-    // move focus to start button if on last slide
-    if(idx === slides.length - 1 && startBtn) startBtn.focus();
-  });
-
-  if(startBtn) startBtn.addEventListener('click', ()=>{
-    overlay.style.display = 'none';
-    overlay.setAttribute('aria-hidden', 'true');
-    // return focus to main interface
-    const optA = document.getElementById('optA');
-    if(optA) optA.focus();
-  });
-
-  // keyboard support
-  document.addEventListener('keydown', (e)=>{
-    // only respond when overlay visible
-    if(!overlay || overlay.style.display === 'none') return;
-    if(e.key === 'ArrowRight' || e.key === 'Enter'){
-      idx = Math.min(idx + 1, slides.length - 1);
-      show(idx);
-      if(idx === slides.length - 1 && startBtn) startBtn.focus();
-    } else if(e.key === 'ArrowLeft'){
-      idx = Math.max(idx - 1, 0);
-      show(idx);
-    } else if(e.key === 'Escape'){
-      overlay.style.display = 'none';
-      overlay.setAttribute('aria-hidden', 'true');
-    }
-  });
-
-  // show first
-  show(0);
-})();
 
 /* =========================
    INICIO
