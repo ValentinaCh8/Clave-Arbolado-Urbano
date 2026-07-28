@@ -164,6 +164,104 @@ button:hover {
   font-size: 14px;
 }
 
+/* PDF Preview Modal */
+#pdfPreviewModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#pdfPreviewModal.open {
+  display: flex;
+}
+
+#pdfPreviewContainer {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 900px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#pdfHeader {
+  background: #0066cc;
+  color: white;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12px 12px 0 0;
+}
+
+#pdfHeader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+#pdfCloseBtn {
+  background: white;
+  color: #0066cc;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#pdfCloseBtn:hover {
+  background: #f0f0f0;
+}
+
+#pdfCanvasContainer {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+#pdfCanvas {
+  border: 1px solid #ddd;
+  background: white;
+  max-width: 100%;
+  height: auto;
+}
+
+#pdfControls {
+  background: #f0f0f0;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  border-radius: 0 0 12px 12px;
+}
+
+#pdfControls button {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+#pdfPageInfo {
+  color: #333;
+  font-size: 14px;
+  margin: 0 10px;
+}
+
 </style>
 </head>
 
@@ -204,7 +302,7 @@ button:hover {
 
     <div class="slide" data-index="1">
       <h1>¿Qué es una clave dicotómica?</h1>
-      <p>Es una herramienta de identificación, similar a una guía. A través de una serie de preguntas de decisión, que presentan dos opciones, podemos llegar a identificar y reconocer una especie.</p>
+      <p>Es una herramienta de identificación, similar a una guía. A través de una serie de preguntas de decisión, que presentan dos opciones, podemos llegar a identificar y reconocer una especie.[...]
       <div class="navArrow">
         <button class="arrowBtn" id="startApp" aria-label="Comenzar" type="button">&rarr;</button>
       </div>
@@ -212,9 +310,31 @@ button:hover {
   </div>
 </div>
 
+<!-- PDF Preview Modal -->
+<div id="pdfPreviewModal">
+  <div id="pdfPreviewContainer">
+    <div id="pdfHeader">
+      <h2 id="pdfTitle">Previsualización del PDF</h2>
+      <button id="pdfCloseBtn" aria-label="Cerrar">&times;</button>
+    </div>
+    <div id="pdfCanvasContainer">
+      <canvas id="pdfCanvas"></canvas>
+    </div>
+    <div id="pdfControls">
+      <button id="pdfPrevBtn">← Anterior</button>
+      <span id="pdfPageInfo">Página 1</span>
+      <button id="pdfNextBtn">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/three@0.156.0/build/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <script>
+
+// Configurar PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 /* =========================
    IMÁGENES (MAPA MANUAL)
@@ -310,6 +430,83 @@ function slugify(text){
     .trim()
     .replace(/\s+/g, '_');
 }
+
+/* =========================
+   PDF PREVIEW CON PDF.JS
+========================= */
+
+let currentPdfDoc = null;
+let currentPdfPage = 1;
+let totalPdfPages = 0;
+
+function showPdfPreview(pdfPath) {
+  const modal = document.getElementById('pdfPreviewModal');
+  const title = document.getElementById('pdfTitle');
+  
+  title.textContent = 'Cargando PDF...';
+  modal.classList.add('open');
+  
+  currentPdfPage = 1;
+  
+  pdfjsLib.getDocument(pdfPath).promise.then(doc => {
+    currentPdfDoc = doc;
+    totalPdfPages = doc.numPages;
+    title.textContent = 'Ficha de especie';
+    renderPdfPage(1);
+  }).catch(err => {
+    console.error('Error cargando PDF:', err);
+    title.textContent = 'Error al cargar el PDF';
+  });
+}
+
+function renderPdfPage(pageNum) {
+  if (!currentPdfDoc) return;
+  
+  if (pageNum < 1 || pageNum > totalPdfPages) return;
+  
+  currentPdfPage = pageNum;
+  
+  currentPdfDoc.getPage(pageNum).then(page => {
+    const canvas = document.getElementById('pdfCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const scale = 2;
+    const viewport = page.getViewport({ scale: scale });
+    
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    
+    const renderContext = {
+      canvasContext: ctx,
+      viewport: viewport
+    };
+    
+    page.render(renderContext).promise.then(() => {
+      document.getElementById('pdfPageInfo').textContent = `Página ${pageNum} de ${totalPdfPages}`;
+    });
+  });
+}
+
+function closePdfPreview() {
+  document.getElementById('pdfPreviewModal').classList.remove('open');
+  currentPdfDoc = null;
+}
+
+// Event listeners para PDF preview
+document.getElementById('pdfCloseBtn').addEventListener('click', closePdfPreview);
+document.getElementById('pdfPrevBtn').addEventListener('click', () => {
+  renderPdfPage(currentPdfPage - 1);
+});
+document.getElementById('pdfNextBtn').addEventListener('click', () => {
+  renderPdfPage(currentPdfPage + 1);
+});
+
+// Cerrar modal al presionar Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('pdfPreviewModal').classList.contains('open')) {
+    closePdfPreview();
+  }
+});
 
 /* =========================
    THREE JS
