@@ -99,8 +99,9 @@ button:hover {
 #introOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(7,54,66,0.95), rgba(1,102,153,0.95));
-  color: #fff;
+  /* soften the outer overlay so the slides' sand background is visible and dominant */
+  background: rgba(0,0,0,0.12);
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -111,10 +112,12 @@ button:hover {
 #introSlides {
   width: 100%;
   max-width: 900px;
-  background: rgba(255,255,255,0.03);
+  /* sand / arena color, more opaque */
+  background: #f4e7c2; /* color arena */
   border-radius: 12px;
   padding: 28px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  color: #111; /* texto en negro */
 }
 
 .slide {
@@ -128,12 +131,12 @@ button:hover {
 .slide h1 {
   margin: 0 0 12px 0;
   font-size: 28px;
-  color: #fff;
+  color: #111; /* título en negro */
 }
 
 .slide p {
   font-size: 18px;
-  color: #eef7ff;
+  color: #111; /* texto en negro */
   line-height: 1.5;
 }
 
@@ -144,8 +147,8 @@ button:hover {
 }
 
 .arrowBtn {
-  background: rgba(255,255,255,0.14);
-  color: #fff;
+  background: #d6c69a; /* tono arena más oscuro para el botón */
+  color: #111; /* flecha en negro */
   border: none;
   padding: 14px 18px;
   border-radius: 10px;
@@ -153,7 +156,7 @@ button:hover {
   font-size: 20px;
 }
 
-.arrowBtn:hover { background: rgba(255,255,255,0.22); }
+.arrowBtn:hover { background: #c4b07a; }
 
 </style>
 </head>
@@ -166,12 +169,12 @@ button:hover {
     <strong>Dilema:</strong> <span id="dilemaId">1</span>
   </div>
 
-  <div class="card" id="optA" style="cursor: pointer;">
+  <div class="card" id="optA" style="cursor: pointer;" tabindex="0">
     <h3>A</h3>
     <p id="optA_text"></p>
   </div>
 
-  <div class="card" id="optB" style="cursor: pointer;">
+  <div class="card" id="optB" style="cursor: pointer;" tabindex="0">
     <h3>B</h3>
     <p id="optB_text"></p>
   </div>
@@ -189,7 +192,7 @@ button:hover {
       <h1>Árboles Urbanos de Córdoba: Clave dicotómica para identificar especies vegetales de la ciudad</h1>
       <p style="margin-top:10px;">Pulsa la flecha para continuar</p>
       <div class="navArrow">
-        <button class="arrowBtn" id="nextToExplain" aria-label="Siguiente">&rarr;</button>
+        <button class="arrowBtn" id="nextToExplain" aria-label="Siguiente" type="button">&rarr;</button>
       </div>
     </div>
 
@@ -197,7 +200,7 @@ button:hover {
       <h1>¿Qué es una clave dicotómica?</h1>
       <p>Es una herramienta de identificación, similar a una guía. A través de una serie de preguntas de decisión, que presentan dos opciones, podemos llegar a identificar y reconocer una especie.</p>
       <div class="navArrow">
-        <button class="arrowBtn" id="startApp" aria-label="Comenzar">&rarr;</button>
+        <button class="arrowBtn" id="startApp" aria-label="Comenzar" type="button">&rarr;</button>
       </div>
     </div>
   </div>
