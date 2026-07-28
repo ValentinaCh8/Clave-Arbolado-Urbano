@@ -289,6 +289,22 @@ const nodes = {
 };
 
 /* =========================
+   PDF LINKS (archivos por especie)
+   Se asume que los PDFs se subirán a la carpeta 'fichas/' con nombres tipo
+   Syagrus_romanzoffiana.pdf, Butia_yatay.pdf, etc.
+========================= */
+const pdfFolder = 'fichas/';
+function slugify(text){
+  return text
+    .toString()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '_');
+}
+
+/* =========================
    THREE JS
 ========================= */
 
@@ -377,11 +393,108 @@ function go(opt){
     document.getElementById("dilemaId").textContent = "Resultado";
     document.getElementById("optA_text").textContent = opt.text + " → " + opt.result;
     document.getElementById("optB").style.display = "none";
+
+    // limpiar panel derecho
+    const container = document.getElementById('canvasContainer');
+    container.innerHTML = '';
+
+    // determinar ruta del PDF (se asume nombres tipo Slug en la carpeta pdfFolder)
+    const slug = slugify(opt.result);
+    const pdfPath = pdfFolder + slug + '.pdf';
+
+    // crear zona de acciones
+    const actions = document.createElement('div');
+    actions.style.padding = '12px';
+    actions.style.maxWidth = '680px';
+
+    // intentamos verificar la existencia con HEAD (puede fallar por CORS; se ofrece fallback)
+    fetch(pdfPath, { method: 'HEAD' }).then(resp => {
+      if(resp.ok){
+        const openBtn = document.createElement('button');
+        openBtn.textContent = 'Ver ficha (abrir PDF)';
+        openBtn.style.display = 'inline-block';
+        openBtn.style.marginRight = '10px';
+        openBtn.onclick = ()=> window.open(pdfPath, '_blank');
+        actions.appendChild(openBtn);
+
+        const previewBtn = document.createElement('button');
+        previewBtn.textContent = 'Previsualizar ficha';
+        previewBtn.onclick = ()=> showPdfPreview(pdfPath);
+        actions.appendChild(previewBtn);
+
+        const info = document.createElement('div');
+        info.style.marginTop = '12px';
+        info.textContent = 'Ficha: ' + pdfPath;
+        actions.appendChild(info);
+      } else {
+        const note = document.createElement('div');
+        note.textContent = 'No hay ficha disponible para esta especie.';
+        actions.appendChild(note);
+      }
+    }).catch(err => {
+      // fallback: mostrar botones que intentan abrir el PDF aunque no se pudo verificar
+      const openBtn = document.createElement('button');
+      openBtn.textContent = 'Ver ficha (abrir PDF)';
+      openBtn.style.display = 'inline-block';
+      openBtn.style.marginRight = '10px';
+      openBtn.onclick = ()=> window.open(pdfPath, '_blank');
+      actions.appendChild(openBtn);
+
+      const previewBtn = document.createElement('button');
+      previewBtn.textContent = 'Previsualizar ficha';
+      previewBtn.onclick = ()=> showPdfPreview(pdfPath);
+      actions.appendChild(previewBtn);
+
+      const note = document.createElement('div');
+      note.style.marginTop = '12px';
+      note.textContent = 'No se pudo verificar la existencia del PDF (consulta la consola). El enlace intentará abrirlo.';
+      actions.appendChild(note);
+      console.warn('Fetch error verificando PDF:', err);
+    });
+
+    container.appendChild(actions);
     return;
   }
 
   document.getElementById("optB").style.display = "block";
   render(opt.goto);
+}
+
+function showPdfPreview(url){
+  const container = document.getElementById('canvasContainer');
+  container.innerHTML = ''; // borrar contenido previo
+
+  const wrap = document.createElement('div');
+  wrap.style.height = '100%';
+  wrap.style.display = 'flex';
+  wrap.style.flexDirection = 'column';
+
+  const ctrl = document.createElement('div');
+  ctrl.style.padding = '8px';
+  ctrl.style.background = 'rgba(255,255,255,0.03)';
+  ctrl.style.display = 'flex';
+  ctrl.style.justifyContent = 'space-between';
+  ctrl.style.alignItems = 'center';
+
+  const title = document.createElement('div');
+  title.textContent = 'Previsualización';
+  ctrl.appendChild(title);
+
+  const close = document.createElement('button');
+  close.textContent = 'Cerrar preview';
+  close.onclick = ()=> { container.innerHTML = ''; };
+  ctrl.appendChild(close);
+
+  wrap.appendChild(ctrl);
+
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.style.flex = '1';
+  iframe.style.border = 'none';
+  iframe.style.width = '100%';
+  wrap.appendChild(iframe);
+
+  container.appendChild(wrap);
 }
 
 /* =========================
