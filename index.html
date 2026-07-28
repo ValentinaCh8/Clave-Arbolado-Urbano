@@ -262,6 +262,19 @@ button:hover {
   margin: 0 10px;
 }
 
+/* Visually-hidden but available to screen readers */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 </style>
 </head>
 
@@ -302,7 +315,7 @@ button:hover {
 
     <div class="slide" data-index="1">
       <h1>¿Qué es una clave dicotómica?</h1>
-      <p>Es una herramienta de identificación, similar a una guía. A través de una serie de preguntas de decisión, que presentan dos opciones, podemos llegar a identificar y reconocer una especie. Si estás usándola por celular, se recomienda usarlo de forma horizontal o marcar la tilde para ver el sitio para computadoras (opción que se encuentra dentro de los tres puntos ubicados en vertical).
+      <p>Es una herramienta de identificación, similar a una guía. A través de una serie de preguntas de decisión, que presentan dos opciones, podemos llegar a identificar y reconocer una esp[...]
       <div class="navArrow">
         <button class="arrowBtn" id="startApp" aria-label="Comenzar" type="button">&rarr;</button>
       </div>
@@ -630,7 +643,8 @@ function go(opt){
         actions.appendChild(previewBtn);
 
         const info = document.createElement('div');
-        info.style.marginTop = '12px';
+        // ocultar visualmente pero mantener disponible para lectores de pantalla
+        info.className = 'sr-only';
         info.textContent = 'Ficha: ' + pdfPath;
         actions.appendChild(info);
       } else {
