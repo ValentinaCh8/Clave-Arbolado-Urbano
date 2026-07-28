@@ -470,6 +470,84 @@ function go(opt){
 }
 
 /* =========================
+   INTRO SLIDES (MEJORADO)
+========================= */
+
+(function setupIntro(){
+  const overlay = document.getElementById('introOverlay');
+  if(!overlay) return;
+  const slides = Array.from(document.querySelectorAll('#introSlides .slide'));
+  if(!slides.length) return;
+  let idx = 0;
+
+  function show(i){
+    slides.forEach(s => s.classList.remove('active'));
+    const slide = slides[i];
+    if(slide) slide.classList.add('active');
+    overlay.setAttribute('aria-hidden', i >= slides.length);
+  }
+
+  function getNextBtn(){ return document.getElementById('nextToExplain'); }
+  function getStartBtn(){ return document.getElementById('startApp'); }
+
+  function onNext(e){
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    const nextBtn = getNextBtn();
+    if(nextBtn && nextBtn.disabled) return; // evitar dobles disparos
+    if(nextBtn) nextBtn.disabled = true;
+    setTimeout(()=>{ if(nextBtn) nextBtn.disabled = false; }, 350);
+
+    idx = Math.min(idx + 1, slides.length - 1);
+    show(idx);
+
+    if(idx === slides.length - 1){
+      const startBtn = getStartBtn();
+      if(startBtn) startBtn.focus();
+    }
+  }
+
+  function onStart(e){
+    if(e){ e.preventDefault(); e.stopPropagation(); }
+    // ocultar overlay y devolver foco a la interfaz principal
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden', 'true');
+    const optA = document.getElementById('optA');
+    if(optA) optA.focus();
+  }
+
+  // Asegurarse de que los botones están presentes y enlazados (removemos listeners previos por seguridad)
+  const nextBtn = getNextBtn();
+  const startBtn = getStartBtn();
+  if(nextBtn){
+    nextBtn.type = 'button';
+    try{ nextBtn.removeEventListener('click', onNext); }catch(e){}
+    nextBtn.addEventListener('click', onNext);
+  }
+  if(startBtn){
+    startBtn.type = 'button';
+    try{ startBtn.removeEventListener('click', onStart); }catch(e){}
+    startBtn.addEventListener('click', onStart);
+  }
+
+  // soporte de teclado (delegar en las mismas funciones para consistencia)
+  document.addEventListener('keydown', (e)=>{
+    if(!overlay || overlay.style.display === 'none') return;
+    if(e.key === 'ArrowRight' || e.key === 'Enter'){
+      onNext(e);
+    } else if(e.key === 'ArrowLeft'){
+      idx = Math.max(idx - 1, 0);
+      show(idx);
+    } else if(e.key === 'Escape'){
+      overlay.style.display = 'none';
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+  });
+
+  // mostrar la primera slide
+  show(0);
+})();
+
+/* =========================
    INICIO
 ========================= */
 
